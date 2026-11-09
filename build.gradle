@@ -1,0 +1,38 @@
+
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'socialnetwork'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+            exclude 'main/resources/**'
+        }
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
+}
+
+application {
+    mainClass = 'socialnetwork.Main'
+}
+
+tasks.named('run', JavaExec) {
+    workingDir = project.projectDir
+    standardInput = System.in
+}

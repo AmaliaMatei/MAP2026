@@ -1,0 +1,42 @@
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+.kotlin/
+
+# Gradle
+.gradle/
+build/
+
+# Java
+*.class
+
+# Eclipse
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+bin/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+# VS Code
+.vscode/
+
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.log
+*.tmp
+*.swp

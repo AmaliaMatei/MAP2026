@@ -1,0 +1,8 @@
+2;Mihai;Ionescu;mihai.ionescu@gmail.com;22;Brasov
+3;Maria;Georgescu;maria.georgescu@gmail.com;20;Oradea
+4;Andrei;Marin;andrei.marin@gmail.com;23;Sibiu
+5;Ioana;Dumitrescu;ioana.d@gmail.com;21;Bucuresti
+6;Vlad;Stan;vlad.stan@gmail.com;24;Timisoara
+8;Alex;Popa;alex.popa@gmail.com;20;Iasi
+9;Ana;Popescu;ana.popescu2@gmail.com;25;Constanta
+10;Amalia;Matei;amalia@gmail.com;21;Constanta
