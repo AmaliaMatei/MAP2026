@@ -90,15 +90,17 @@ public class InMemoryRepository<ID, E extends Entity<ID>>
         );
     }
 
+
     /**
-     * Deletes an entity.
+     * Deletes an entity from memory.
      *
      * @param id the entity identifier
-     * @throws IllegalArgumentException if ID is null
+     * @return the deleted entity
+     * @throws IllegalArgumentException if id is null
      * @throws EntityNotFoundException if the entity is missing
      */
     @Override
-    public void delete(ID id) {
+    public E delete(ID id) {
 
         checkId(id);
 
@@ -108,18 +110,21 @@ public class InMemoryRepository<ID, E extends Entity<ID>>
             );
         }
 
-        entities.remove(id);
+        return entities.remove(id);
     }
 
+
+
     /**
-     * Updates an existing entity.
+     * Updates an entity stored in memory.
      *
-     * @param entity the updated entity
-     * @throws IllegalArgumentException if entity or ID is null
-     * @throws EntityNotFoundException if the entity is missing
+     * @param entity the entity with updated information
+     * @return null if updated, or the entity if not found
+     * @throws IllegalArgumentException if entity
+     *         or its identifier is null
      */
     @Override
-    public void update(E entity) {
+    public E update(E entity) {
 
         checkEntity(entity);
         validator.validate(entity);
@@ -127,13 +132,14 @@ public class InMemoryRepository<ID, E extends Entity<ID>>
         ID id = entity.getId();
 
         if (!entities.containsKey(id)) {
-            throw new EntityNotFoundException(
-                    "Entity with ID " + id + " does not exist."
-            );
+            return entity;
         }
 
         entities.put(id, entity);
+
+        return null;
     }
+
 
     /**
      * Checks whether an identifier is valid.

@@ -40,3 +40,6 @@ Thumbs.db
 *.log
 *.tmp
 *.swp
+
+# Local database credentials
+src/main/resources/config.properties

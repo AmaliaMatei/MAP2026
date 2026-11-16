@@ -11,6 +11,12 @@ repositories {
     mavenCentral()
 }
 
+
+dependencies {
+    implementation 'org.postgresql:postgresql:42.7.7'
+}
+
+
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8

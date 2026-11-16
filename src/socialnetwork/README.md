@@ -393,3 +393,107 @@ Laboratorul 4 urmareste modernizarea implementarii aplicatiei prin folosirea fac
 Au fost introduse interfete functionale, lambda, Predicate, Supplier, referinte la metode, Stream API si Optional, pastrand arhitectura de baza si persistenta in fisiere text.
 
 Scopul refactorizarii este obtinerea unui cod mai declarativ, reutilizabil si mai usor de intretinut, fara modificarea functionalitatilor existente.
+
+LABORATORUL 5 – MAP
+RETEA DE SOCIALIZARE
+An universitar 2026–2027
+
+1. DESCRIEREA PROIECTULUI
+
+Aplicatia reprezinta o retea de socializare si continua implementarea din Laboratorul 4.
+
+Sunt pastrate functionalitatile existente: adaugarea, stergerea si afisarea utilizatorilor, gestionarea prieteniilor si determinarea comunitatilor.
+
+Laboratorul 5 introduce persistenta datelor in PostgreSQL prin JDBC si generarea automata a identificatorilor utilizatorilor de catre baza de date.
+
+2. ARHITECTURA
+
+Proiectul este organizat in urmatoarele pachete:
+
+- domain – entitatile User, Friendship si Tuple.
+- validation – validarea entitatilor.
+- repository – implementari pentru MEMORY, FILE si DATABASE.
+- factory – alegerea implementarii de repository.
+- service – logica aplicatiei.
+- ui – interfata utilizatorului in consola.
+- exceptions – exceptii specifice aplicatiei.
+
+RepositoryFactory selecteaza implementarea folosind proprietatea repository.type, fara modificari in codul sursa.
+
+3. BAZA DE DATE
+
+Se utilizeaza PostgreSQL, cu baza de date socialnetwork si tabelele users si friendships.
+
+Tabelul users foloseste:
+id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY.
+
+Tabelul friendships foloseste cheia primara compusa (id1, id2), doua chei straine catre users(id), constrangerea CHECK (id1 < id2) si campul friends_from de tip TIMESTAMP NOT NULL.
+
+Au fost pastrate si coloanele email, age si city in tabelul users, deoarece acestea sunt utilizate de functionalitatile implementate in laboratoarele anterioare.
+
+4. JUSTIFICAREA STERGERII PRIETENIILOR
+
+Am ales ON DELETE CASCADE pentru ambele chei straine din friendships.
+
+La stergerea unui utilizator din PostgreSQL, toate prieteniile asociate sunt eliminate automat de baza de date.
+
+Aceasta solutie asigura integritatea referentiala si evita necesitatea stergerii manuale a fiecarei prietenii in service.
+
+Pentru MEMORY si FILE, prieteniile sunt sterse explicit de service.
+
+5. IDENTIFICATORII UTILIZATORILOR
+
+Pentru DATABASE, utilizatorul nou este creat fara identificator.
+
+PostgreSQL genereaza identificatorul la INSERT. Repository-ul foloseste RETURN_GENERATED_KEYS si getGeneratedKeys() pentru a recupera valoarea, pe care o atribuie obiectului User.
+
+Pentru MEMORY si FILE, identificatorii continua sa fie generati in service, conform implementarii existente.
+
+6. JDBC SI SIGURANTA
+
+Conexiunile sunt obtinute cu DriverManager.getConnection(url, user, password).
+
+Interogarile folosesc PreparedStatement si parametri ?, prevenind interpretarea valorilor introduse de utilizator drept instructiuni SQL.
+
+Connection, PreparedStatement si ResultSet sunt gestionate prin try-with-resources.
+
+Exceptiile SQLException sunt transformate in RepositoryException. Interfata afiseaza mesaje pentru erorile de conexiune si incalcarea constrangerilor, fara stack trace.
+
+7. CONFIGURARE
+
+Fisierul config.properties contine:
+repository.type
+db.url
+db.user
+db.password
+users.file
+friendships.file
+
+Tipurile acceptate sunt DATABASE, FILE si MEMORY.
+
+Fisierul config.example.properties ofera un model fara parola reala. Fisierul config.properties este exclus din versionare prin .gitignore.
+
+8. RULAREA PROIECTULUI
+
+Este necesara o instalare PostgreSQL si configurarea bazei de date socialnetwork.
+
+Proiectul foloseste Gradle si driverul PostgreSQL JDBC, versiunea 42.7.7.
+
+Aplicatia se porneste prin clasa socialnetwork.Main sau prin task-ul Gradle run.
+
+9. VERIFICARE
+
+La predare se demonstreaza:
+
+- Operatiile de adaugare si stergere in aplicatie, verificate in pgAdmin.
+- Metodele JDBC de actualizare si contractul Repository.
+- Identificatorul generat automat de PostgreSQL.
+- Persistenta datelor dupa repornirea aplicatiei.
+- Schimbarea repository.type intre DATABASE, FILE si MEMORY.
+- Stergerea automata a prieteniilor prin ON DELETE CASCADE.
+- Tratarea erorilor cu serverul PostgreSQL oprit.
+- Salvarea textului '); DROP TABLE users; -- ca valoare obisnuita, demonstrand utilizarea PreparedStatement.
+
+10. VERSIONARE
+
+Codul sursa este versionat folosind Git. Parola reala pentru PostgreSQL nu este inclusa in fisierele urmarite de Git.

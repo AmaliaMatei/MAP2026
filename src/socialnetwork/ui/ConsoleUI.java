@@ -8,6 +8,8 @@ import socialnetwork.service.UserService;
 import socialnetwork.service.FriendshipService;
 import socialnetwork.service.CommunityService;
 
+import socialnetwork.exceptions.RepositoryException;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -15,12 +17,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
  * Provides an interactive console interface
  * for the social network application.
+ *
+ * Handles user operations, friendships,
+ * communities and repository errors.
  */
 public class ConsoleUI {
 
@@ -37,6 +41,7 @@ public class ConsoleUI {
      * @param users the user service
      * @param friendships the friendship service
      * @param communities the community service
+     * @throws IllegalArgumentException if a service is null
      */
     public ConsoleUI(
             UserService users,
@@ -56,7 +61,8 @@ public class ConsoleUI {
     }
 
     /**
-     * Registers menu operations using method references.
+     * Registers the available menu operations
+     * using method references and lambdas.
      */
     private void configureActions() {
 
@@ -71,7 +77,8 @@ public class ConsoleUI {
         actions.put("7", () ->
                 System.out.println(
                         "Numar comunitati: "
-                                + communities.getNumberOfCommunities()
+                                + communities
+                                .getNumberOfCommunities()
                 )
         );
 
@@ -84,7 +91,7 @@ public class ConsoleUI {
     /**
      * Reads a line from the console.
      *
-     * @param message displayed prompt
+     * @param message the displayed prompt
      * @return the trimmed input
      */
     private String read(String message) {
@@ -94,11 +101,13 @@ public class ConsoleUI {
     }
 
     /**
-     * Chooses an existing user by name and,
-     * when necessary, by email.
+     * Chooses an existing user by name.
+     * If several users have the same name,
+     * the email address is requested.
      *
-     * @param message displayed message
+     * @param message the displayed message
      * @return the selected user
+     * @throws RepositoryException if retrieval fails
      */
     private User chooseUser(String message) {
 
@@ -110,6 +119,7 @@ public class ConsoleUI {
         String email = null;
 
         if (users.countByName(firstName, lastName) > 1) {
+
             email = read(
                     "Exista mai multe persoane. Email: "
             );
@@ -123,13 +133,13 @@ public class ConsoleUI {
     }
 
     /**
-     * Displays the available menu options.
+     * Displays the main application menu.
      */
     private void showMenu() {
 
         Stream.of(
                 "",
-                "RETEA DE SOCIALIZARE",
+                "       RETEA DE SOCIALIZARE",
                 "1. Adauga utilizator",
                 "2. Sterge utilizator",
                 "3. Afiseaza utilizatori",
@@ -138,12 +148,18 @@ public class ConsoleUI {
                 "6. Afiseaza prietenii",
                 "7. Numar comunitati",
                 "8. Cea mai sociabila comunitate",
-                "0. Iesire"
+                "0. Iesire",
+                ""
         ).forEach(System.out::println);
     }
 
     /**
-     * Adds a new user.
+     * Adds a new user and displays the identifier
+     * assigned by the persistence layer.
+     *
+     * For DATABASE, PostgreSQL generates the ID.
+     *
+     * @throws RepositoryException if persistence fails
      */
     private void addUser() {
 
@@ -157,7 +173,7 @@ public class ConsoleUI {
 
         String city = read("Oras: ");
 
-        users.addUser(
+        User user = users.addUser(
                 firstName,
                 lastName,
                 email,
@@ -166,12 +182,21 @@ public class ConsoleUI {
         );
 
         System.out.println(
-                "Utilizator adaugat!"
+                "Utilizator adaugat cu succes!"
+        );
+
+        System.out.println(
+                "ID generat: " + user.getId()
         );
     }
 
     /**
      * Deletes an existing user.
+     *
+     * For DATABASE, associated friendships are
+     * automatically removed using ON DELETE CASCADE.
+     *
+     * @throws RepositoryException if deletion fails
      */
     private void removeUser() {
 
@@ -186,12 +211,14 @@ public class ConsoleUI {
         );
 
         System.out.println(
-                "Utilizator sters!"
+                "Utilizator sters cu succes!"
         );
     }
 
     /**
-     * Displays users sorted by identifier.
+     * Displays all users sorted by identifier.
+     *
+     * @throws RepositoryException if retrieval fails
      */
     private void showUsers() {
 
@@ -206,6 +233,10 @@ public class ConsoleUI {
             return;
         }
 
+        System.out.println(
+                "Lista utilizatorilor:"
+        );
+
         allUsers.stream()
                 .sorted(
                         Comparator.comparing(User::getId)
@@ -214,7 +245,9 @@ public class ConsoleUI {
     }
 
     /**
-     * Creates a friendship.
+     * Creates a friendship between two existing users.
+     *
+     * @throws RepositoryException if persistence fails
      */
     private void addFriendship() {
 
@@ -232,12 +265,14 @@ public class ConsoleUI {
         );
 
         System.out.println(
-                "Prietenie adaugata!"
+                "Prietenie adaugata cu succes!"
         );
     }
 
     /**
-     * Removes a friendship.
+     * Removes an existing friendship.
+     *
+     * @throws RepositoryException if deletion fails
      */
     private void removeFriendship() {
 
@@ -255,12 +290,17 @@ public class ConsoleUI {
         );
 
         System.out.println(
-                "Prietenie stearsa!"
+                "Prietenie stearsa cu succes!"
         );
     }
 
     /**
      * Displays all friendships.
+     *
+     * Each friendship includes the users'
+     * names and the creation date.
+     *
+     * @throws RepositoryException if retrieval fails
      */
     private void showFriendships() {
 
@@ -274,6 +314,10 @@ public class ConsoleUI {
             );
             return;
         }
+
+        System.out.println(
+                "Lista prieteniilor:"
+        );
 
         all.stream()
                 .sorted(
@@ -303,7 +347,10 @@ public class ConsoleUI {
     }
 
     /**
-     * Displays the most sociable community.
+     * Displays the most sociable community
+     * and the length of its longest shortest path.
+     *
+     * @throws RepositoryException if retrieval fails
      */
     private void showMostSociableCommunity() {
 
@@ -336,6 +383,8 @@ public class ConsoleUI {
 
     /**
      * Displays the community of a selected user.
+     *
+     * @throws RepositoryException if retrieval fails
      */
     private void showUserCommunity() {
 
@@ -355,7 +404,8 @@ public class ConsoleUI {
     /**
      * Reads the next menu option.
      *
-     * @return selected option, or zero on input end
+     * @return the selected option,
+     *         or zero when input ends
      */
     private String readOption() {
 
@@ -369,10 +419,13 @@ public class ConsoleUI {
     }
 
     /**
-     * Executes a menu option.
+     * Executes a selected menu operation.
      *
-     * @param option the selected option
-     * @return true when the application must stop
+     * Repository errors are displayed without
+     * printing stack traces.
+     *
+     * @param option the selected menu option
+     * @return true if the application must stop
      */
     private boolean executeOption(String option) {
 
@@ -398,6 +451,13 @@ public class ConsoleUI {
 
             action.run();
 
+        } catch (RepositoryException e) {
+
+            System.out.println(
+                    "Eroare de persistenta: "
+                            + e.getMessage()
+            );
+
         } catch (RuntimeException e) {
 
             System.out.println(
@@ -409,9 +469,10 @@ public class ConsoleUI {
     }
 
     /**
-     * Starts the interactive application.
-     * A generated stream replaces the classic
-     * while loop and stops at option zero.
+     * Starts the interactive console application.
+     *
+     * A generated stream processes menu options
+     * until the user selects zero.
      */
     public void run() {
 

@@ -6,7 +6,9 @@ import socialnetwork.domain.Friendship;
 import socialnetwork.domain.Tuple;
 
 import socialnetwork.repository.Repository;
+
 import socialnetwork.factory.RepositoryFactory;
+import socialnetwork.factory.RepositoryType;
 
 import socialnetwork.validation.UserValidator;
 import socialnetwork.validation.Validator;
@@ -24,12 +26,15 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
- * Configures dependencies and starts the social network.
+ * Configures application dependencies and starts
+ * the social network application.
+ *
+ * Supports MEMORY, FILE and DATABASE persistence.
  */
 public class Main {
 
     /**
-     * Starts the application.
+     * Starts the social network application.
      *
      * @param args command-line arguments
      */
@@ -37,65 +42,81 @@ public class Main {
 
         try {
 
+            // Create the repository factory.
             RepositoryFactory factory =
                     new RepositoryFactory();
 
-            // Existing validation is preserved.
-            // The additional rule is defined as a lambda.
-            Validator<User> additionalRule = user -> {
-
-                Objects.requireNonNull(user);
-
-                boolean invalid = Stream.of(
-                                user.getFirstName(),
-                                user.getLastName(),
-                                user.getEmail(),
-                                user.getCity()
-                        )
-                        .filter(Objects::nonNull)
-                        .anyMatch(field ->
-                                field.contains(";")
-                                        || field.contains("\t")
-                                        || field.contains("\n")
-                                        || field.contains("\r")
-                        );
-
-                if (invalid) {
-                    throw new ValidationException(
-                            "Campurile utilizatorului nu pot "
-                                    + "contine ;, taburi sau randuri noi."
-                    );
-                }
-            };
-
-            // Composing validators using andThen.
+            // Default user validation.
             Validator<User> userValidator =
-                    new UserValidator()
-                            .andThen(additionalRule);
+                    new UserValidator();
 
-            // Load users before friendships.
+            // Additional validation for FILE storage only.
+            // Semicolons and line breaks may corrupt
+            // the text file format.
+            if (factory.getRepositoryType()
+                    == RepositoryType.FILE) {
+
+                Validator<User> additionalRule = user -> {
+
+                    Objects.requireNonNull(user);
+
+                    boolean invalid = Stream.of(
+                                    user.getFirstName(),
+                                    user.getLastName(),
+                                    user.getEmail(),
+                                    user.getCity()
+                            )
+                            .filter(Objects::nonNull)
+                            .anyMatch(field ->
+                                    field.contains(";")
+                                            || field.contains("\t")
+                                            || field.contains("\n")
+                                            || field.contains("\r")
+                            );
+
+                    if (invalid) {
+                        throw new ValidationException(
+                                "Campurile utilizatorului nu pot "
+                                        + "contine ;, taburi "
+                                        + "sau randuri noi."
+                        );
+                    }
+                };
+
+                userValidator =
+                        userValidator.andThen(additionalRule);
+            }
+
+            // Create the user repository.
             Repository<Long, User> userRepository =
                     factory.createUtilizatorRepository(
                             userValidator
                     );
 
+            // Create the friendship validator.
+            // It verifies that both users exist.
             Validator<Friendship> friendshipValidator =
                     new ExistingUsersFriendshipValidator(
                             userRepository
                     );
 
+            // Create the friendship repository.
             Repository<Tuple<Long, Long>, Friendship>
                     friendshipRepository =
                     factory.createPrietenieRepository(
                             friendshipValidator
                     );
 
+            // Create the user service.
+            // RepositoryType determines ID generation.
             UserService users = new UserService(
                     userRepository,
                     friendshipRepository,
-                    userValidator
+                    userValidator,
+                    factory.getRepositoryType()
             );
 
+            // Create the friendship service.
             FriendshipService friendships =
                     new FriendshipService(
                             friendshipRepository,
@@ -103,16 +124,23 @@ public class Main {
                             friendshipValidator
                     );
 
+            // Create the community service.
             CommunityService communities =
                     new CommunityService(
                             userRepository,
                             friendshipRepository
                     );
 
+            // Create and start the console interface.
             ConsoleUI ui = new ConsoleUI(
                     users,
                     friendships,
                     communities
+            );
+
+            System.out.println(
+                    "Aplicatia foloseste repository: "
+                            + factory.getRepositoryType()
             );
 
             ui.run();

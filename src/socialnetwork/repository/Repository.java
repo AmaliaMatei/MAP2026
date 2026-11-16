@@ -2,6 +2,7 @@
 package socialnetwork.repository;
 
 import socialnetwork.domain.Entity;
+import socialnetwork.exceptions.RepositoryException;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -12,7 +13,7 @@ import java.util.stream.Collectors;
 /**
  * Defines the contract for data repositories.
  *
- * @param <ID> the identifier type
+ * @param <ID> the entity identifier type
  * @param <E> the entity type
  */
 public interface Repository<ID, E extends Entity<ID>> {
@@ -21,11 +22,8 @@ public interface Repository<ID, E extends Entity<ID>> {
      * Saves a new entity.
      *
      * @param entity the entity to save
-     * @throws IllegalArgumentException if entity or ID is null
-     * @throws socialnetwork.exceptions.ValidationException
-     *         if the entity is invalid
-     * @throws socialnetwork.exceptions.DuplicateEntityException
-     *         if the identifier already exists
+     * @throws IllegalArgumentException if entity is null
+     * @throws RepositoryException if persistence fails
      */
     void save(E entity);
 
@@ -34,25 +32,27 @@ public interface Repository<ID, E extends Entity<ID>> {
      *
      * @param id the entity identifier
      * @return an Optional containing the entity,
-     *         or an empty Optional if not found
+     *         or empty if not found
      * @throws IllegalArgumentException if id is null
+     * @throws RepositoryException if retrieval fails
      */
     Optional<E> findOne(ID id);
 
     /**
      * Returns all stored entities.
      *
-     * @return an unmodifiable collection of entities
+     * @return a collection of entities
+     * @throws RepositoryException if retrieval fails
      */
     Collection<E> findAll();
 
     /**
-     * Filters entities without changing the repository.
+     * Filters entities using a predicate.
      *
-     * @param filter predicate defining which
-     *               entities are included
-     * @return matching entities as a list
+     * @param filter the filtering predicate
+     * @return the matching entities
      * @throws NullPointerException if filter is null
+     * @throws RepositoryException if retrieval fails
      */
     default List<E> findAll(Predicate<E> filter) {
         return findAll()
@@ -65,21 +65,21 @@ public interface Repository<ID, E extends Entity<ID>> {
      * Deletes an entity by its identifier.
      *
      * @param id the entity identifier
+     * @return the deleted entity
      * @throws IllegalArgumentException if id is null
-     * @throws socialnetwork.exceptions.EntityNotFoundException
-     *         if the entity does not exist
+     * @throws RepositoryException if deletion fails
      */
-    void delete(ID id);
+    E delete(ID id);
 
     /**
      * Updates an existing entity.
      *
-     * @param entity the entity with updated information
-     * @throws IllegalArgumentException if entity or ID is null
-     * @throws socialnetwork.exceptions.ValidationException
-     *         if the entity is invalid
-     * @throws socialnetwork.exceptions.EntityNotFoundException
-     *         if the entity does not exist
+     * @param entity the entity with updated data
+     * @return null if the update succeeds,
+     *         or the entity if its ID does not exist
+     * @throws IllegalArgumentException if entity
+     *         or its identifier is null
+     * @throws RepositoryException if updating fails
      */
-    void update(E entity);
+    E update(E entity);
 }

@@ -230,4 +230,15 @@ public class RepositoryFactory {
 
         return creators.get(repositoryType).get();
     }
+
+
+    /**
+     * Returns the configured repository type.
+     *
+     * @return the active persistence type
+     */
+    public RepositoryType getRepositoryType() {
+        return repositoryType;
+    }
+
 }

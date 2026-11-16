@@ -27,9 +27,11 @@ public class UserValidator implements Validator<User> {
 
         StringBuilder errors = new StringBuilder();
 
-        if (user.getId() == null || user.getId() <= 0) {
+
+        if (user.getId() != null && user.getId() <= 0) {
             errors.append("ID invalid.\n");
         }
+
 
         if (user.getFirstName() == null ||
                 user.getFirstName().trim().isEmpty()) {

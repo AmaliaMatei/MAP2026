@@ -229,19 +229,21 @@ public abstract class AbstractFileRepository<ID, E extends Entity<ID>>
         }
     }
 
+
     /**
      * Deletes an entity and updates the file.
      *
      * @param id the identifier of the entity
+     * @return the deleted entity
      * @throws RepositoryException if writing fails
      */
     @Override
-    public void delete(ID id) {
+    public E delete(ID id) {
 
         Map<ID, E> backup =
                 new HashMap<ID, E>(entities);
 
-        super.delete(id);
+        E deletedEntity = super.delete(id);
 
         try {
             writeToFile();
@@ -251,21 +253,30 @@ public abstract class AbstractFileRepository<ID, E extends Entity<ID>>
             entities.putAll(backup);
             throw e;
         }
+
+        return deletedEntity;
     }
+
+
 
     /**
      * Updates an entity and rewrites the file.
      *
-     * @param entity the updated entity
+     * @param entity the entity with updated information
+     * @return null if updated, or the entity if not found
      * @throws RepositoryException if writing fails
      */
     @Override
-    public void update(E entity) {
+    public E update(E entity) {
 
         Map<ID, E> backup =
                 new HashMap<ID, E>(entities);
 
-        super.update(entity);
+        E result = super.update(entity);
+
+        if (result != null) {
+            return result;
+        }
 
         try {
             writeToFile();
@@ -275,5 +286,8 @@ public abstract class AbstractFileRepository<ID, E extends Entity<ID>>
             entities.putAll(backup);
             throw e;
         }
+
+        return null;
     }
+
 }
